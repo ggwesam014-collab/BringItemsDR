@@ -1,17 +1,16 @@
--- Bring Items GUI
--- ضع هذا LocalScript داخل StarterPlayerScripts
+--// Bring Items
+--// LocalScript داخل StarterPlayerScripts
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
 local Player = Players.LocalPlayer
-
 local ObjectModels = workspace:WaitForChild("ObjectModels")
 
-local BringEnabled = false
 local SelectedItems = {}
-local Connections = {}
+local BringEnabled = false
+local GuiVisible = true
 
 --==================================================
 -- GUI
@@ -22,45 +21,61 @@ ScreenGui.Name = "BringItemsGui"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = Player:WaitForChild("PlayerGui")
 
+-- زر إظهار/إخفاء GUI
+local OpenButton = Instance.new("TextButton")
+OpenButton.Size = UDim2.new(0, 42, 0, 32)
+OpenButton.Position = UDim2.new(0, 15, 0.5, -16)
+OpenButton.BackgroundColor3 = Color3.fromRGB(35,35,42)
+OpenButton.Text = "B"
+OpenButton.TextColor3 = Color3.fromRGB(255,255,255)
+OpenButton.TextSize = 15
+OpenButton.Font = Enum.Font.GothamBold
+OpenButton.BorderSizePixel = 0
+OpenButton.Parent = ScreenGui
+
+local OpenCorner = Instance.new("UICorner")
+OpenCorner.CornerRadius = UDim.new(0,8)
+OpenCorner.Parent = OpenButton
+
+-- النافذة
 local Main = Instance.new("Frame")
-Main.Name = "Main"
-Main.Size = UDim2.new(0, 300, 0, 420)
-Main.Position = UDim2.new(0.5, -150, 0.5, -210)
-Main.BackgroundColor3 = Color3.fromRGB(22, 22, 27)
+Main.Size = UDim2.new(0, 240, 0, 330)
+Main.Position = UDim2.new(0, 65, 0.5, -165)
+Main.BackgroundColor3 = Color3.fromRGB(22,22,27)
 Main.BorderSizePixel = 0
 Main.Parent = ScreenGui
 
-local Corner = Instance.new("UICorner")
-Corner.CornerRadius = UDim.new(0, 12)
-Corner.Parent = Main
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0,10)
+MainCorner.Parent = Main
 
 local Stroke = Instance.new("UIStroke")
-Stroke.Color = Color3.fromRGB(65, 65, 75)
+Stroke.Color = Color3.fromRGB(60,60,70)
 Stroke.Thickness = 1
 Stroke.Parent = Main
 
 --==================================================
--- Title
+-- Header
 --==================================================
 
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, -20, 0, 45)
-Title.Position = UDim2.new(0, 10, 0, 5)
+Title.Size = UDim2.new(1, -15, 0, 35)
+Title.Position = UDim2.new(0,8,0,3)
 Title.BackgroundTransparency = 1
 Title.Text = "Bring Items"
 Title.TextColor3 = Color3.fromRGB(255,255,255)
-Title.TextSize = 22
+Title.TextSize = 17
 Title.Font = Enum.Font.GothamBold
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = Main
 
 local Counter = Instance.new("TextLabel")
-Counter.Size = UDim2.new(0, 100, 0, 25)
-Counter.Position = UDim2.new(1, -110, 0, 15)
+Counter.Size = UDim2.new(0,80,0,20)
+Counter.Position = UDim2.new(1,-88,0,10)
 Counter.BackgroundTransparency = 1
-Counter.Text = "0 Selected"
+Counter.Text = "0"
 Counter.TextColor3 = Color3.fromRGB(150,150,160)
-Counter.TextSize = 12
+Counter.TextSize = 11
 Counter.Font = Enum.Font.Gotham
 Counter.TextXAlignment = Enum.TextXAlignment.Right
 Counter.Parent = Main
@@ -70,145 +85,149 @@ Counter.Parent = Main
 --==================================================
 
 local Search = Instance.new("TextBox")
-Search.Size = UDim2.new(1, -20, 0, 35)
-Search.Position = UDim2.new(0, 10, 0, 55)
+Search.Size = UDim2.new(1,-16,0,30)
+Search.Position = UDim2.new(0,8,0,40)
 Search.BackgroundColor3 = Color3.fromRGB(30,30,36)
 Search.BorderSizePixel = 0
-Search.PlaceholderText = "Search items..."
+Search.PlaceholderText = "Search..."
 Search.PlaceholderColor3 = Color3.fromRGB(120,120,130)
 Search.Text = ""
 Search.TextColor3 = Color3.fromRGB(255,255,255)
-Search.TextSize = 13
+Search.TextSize = 12
 Search.Font = Enum.Font.Gotham
 Search.ClearTextOnFocus = false
 Search.Parent = Main
 
 local SearchCorner = Instance.new("UICorner")
-SearchCorner.CornerRadius = UDim.new(0,8)
+SearchCorner.CornerRadius = UDim.new(0,7)
 SearchCorner.Parent = Search
 
 --==================================================
--- Items List
+-- List
 --==================================================
 
 local List = Instance.new("ScrollingFrame")
-List.Name = "ItemsList"
-List.Size = UDim2.new(1, -20, 0, 230)
-List.Position = UDim2.new(0, 10, 0, 100)
+List.Size = UDim2.new(1,-16,0,175)
+List.Position = UDim2.new(0,8,0,77)
 List.BackgroundColor3 = Color3.fromRGB(27,27,33)
 List.BorderSizePixel = 0
-List.ScrollBarThickness = 4
+List.ScrollBarThickness = 3
 List.CanvasSize = UDim2.new(0,0,0,0)
 List.Parent = Main
 
 local ListCorner = Instance.new("UICorner")
-ListCorner.CornerRadius = UDim.new(0,8)
+ListCorner.CornerRadius = UDim.new(0,7)
 ListCorner.Parent = List
 
 local Layout = Instance.new("UIListLayout")
-Layout.Padding = UDim.new(0,5)
+Layout.Padding = UDim.new(0,3)
 Layout.SortOrder = Enum.SortOrder.Name
 Layout.Parent = List
 
 local Padding = Instance.new("UIPadding")
-Padding.PaddingTop = UDim.new(0,7)
-Padding.PaddingBottom = UDim.new(0,7)
-Padding.PaddingLeft = UDim.new(0,7)
-Padding.PaddingRight = UDim.new(0,7)
+Padding.PaddingTop = UDim.new(0,5)
+Padding.PaddingLeft = UDim.new(0,5)
+Padding.PaddingRight = UDim.new(0,5)
 Padding.Parent = List
 
 --==================================================
--- Update Counter
+-- Counter
 --==================================================
 
 local function UpdateCounter()
 	local Count = 0
 
-	for _, Selected in pairs(SelectedItems) do
-		if Selected then
+	for _, Value in pairs(SelectedItems) do
+		if Value then
 			Count += 1
 		end
 	end
 
-	Counter.Text = tostring(Count) .. " Selected"
+	Counter.Text = Count .. " Selected"
 end
 
 --==================================================
--- Create Item Button
+-- Item Button
 --==================================================
 
 local function CreateItemButton(Model)
+
 	if not Model:IsA("Model") then
 		return
 	end
 
 	local Button = Instance.new("TextButton")
-	Button.Name = Model.Name
-	Button.Size = UDim2.new(1, -2, 0, 35)
-	Button.BackgroundColor3 = Color3.fromRGB(35,35,42)
+	Button.Size = UDim2.new(1,-2,0,28)
+	Button.BackgroundColor3 = Color3.fromRGB(36,36,43)
 	Button.BorderSizePixel = 0
 	Button.Text = Model.Name
 	Button.TextColor3 = Color3.fromRGB(220,220,225)
-	Button.TextSize = 13
+	Button.TextSize = 11
 	Button.Font = Enum.Font.GothamMedium
 	Button.TextXAlignment = Enum.TextXAlignment.Left
 	Button.AutoButtonColor = false
 	Button.Parent = List
 
-	local ButtonPadding = Instance.new("UIPadding")
-	ButtonPadding.PaddingLeft = UDim.new(0,10)
-	ButtonPadding.Parent = Button
+	local Pad = Instance.new("UIPadding")
+	Pad.PaddingLeft = UDim.new(0,8)
+	Pad.Parent = Button
 
-	local ButtonCorner = Instance.new("UICorner")
-	ButtonCorner.CornerRadius = UDim.new(0,7)
-	ButtonCorner.Parent = Button
+	local Corner = Instance.new("UICorner")
+	Corner.CornerRadius = UDim.new(0,6)
+	Corner.Parent = Button
 
 	Button.MouseButton1Click:Connect(function()
 
 		SelectedItems[Model] = not SelectedItems[Model]
 
 		if SelectedItems[Model] then
-			Button.BackgroundColor3 = Color3.fromRGB(45,125,75)
-			Button.TextColor3 = Color3.fromRGB(255,255,255)
+			Button.BackgroundColor3 = Color3.fromRGB(40,125,70)
 		else
-			Button.BackgroundColor3 = Color3.fromRGB(35,35,42)
-			Button.TextColor3 = Color3.fromRGB(220,220,225)
+			Button.BackgroundColor3 = Color3.fromRGB(36,36,43)
 		end
 
 		UpdateCounter()
 	end)
 
 	Model.AncestryChanged:Connect(function(_, Parent)
+
 		if not Parent then
 			SelectedItems[Model] = nil
-			Button:Destroy()
+
+			if Button then
+				Button:Destroy()
+			end
+
 			UpdateCounter()
 		end
+
 	end)
 end
 
 --==================================================
--- Refresh Items
+-- Refresh
 --==================================================
 
 local function RefreshItems()
+
 	for _, Object in ipairs(List:GetChildren()) do
 		if Object:IsA("TextButton") then
 			Object:Destroy()
 		end
 	end
 
-	local SearchText = string.lower(Search.Text)
+	local Query = string.lower(Search.Text)
 
 	for _, Model in ipairs(ObjectModels:GetChildren()) do
+
 		if Model:IsA("Model") then
 
-			if SearchText == ""
-				or string.find(string.lower(Model.Name), SearchText, 1, true) then
+			if Query == ""
+				or string.find(string.lower(Model.Name), Query, 1, true) then
 
 				CreateItemButton(Model)
-			end
 
+			end
 		end
 	end
 
@@ -218,7 +237,7 @@ local function RefreshItems()
 		0,
 		0,
 		0,
-		Layout.AbsoluteContentSize.Y + 15
+		Layout.AbsoluteContentSize.Y + 10
 	)
 end
 
@@ -241,135 +260,54 @@ RefreshItems()
 --==================================================
 
 local Toggle = Instance.new("TextButton")
-Toggle.Name = "BringToggle"
-Toggle.Size = UDim2.new(1, -20, 0, 45)
-Toggle.Position = UDim2.new(0, 10, 0, 340)
+Toggle.Size = UDim2.new(1,-16,0,34)
+Toggle.Position = UDim2.new(0,8,0,258)
 Toggle.BackgroundColor3 = Color3.fromRGB(45,45,52)
 Toggle.BorderSizePixel = 0
 Toggle.Text = "Bring: OFF"
-Toggle.TextColor3 = Color3.fromRGB(220,220,225)
-Toggle.TextSize = 15
+Toggle.TextColor3 = Color3.fromRGB(235,235,240)
+Toggle.TextSize = 12
 Toggle.Font = Enum.Font.GothamBold
 Toggle.AutoButtonColor = false
 Toggle.Parent = Main
 
 local ToggleCorner = Instance.new("UICorner")
-ToggleCorner.CornerRadius = UDim.new(0,9)
+ToggleCorner.CornerRadius = UDim.new(0,7)
 ToggleCorner.Parent = Toggle
 
 --==================================================
--- Bring Function
---==================================================
-
-local function GetRoot()
-	local Character = Player.Character
-
-	if not Character then
-		return nil
-	end
-
-	return Character:FindFirstChild("HumanoidRootPart")
-end
-
-local function BringModel(Model)
-	if not Model
-		or not Model.Parent
-		or not Model:IsA("Model") then
-		return
-	end
-
-	local Root = GetRoot()
-
-	if not Root then
-		return
-	end
-
-	-- المكان أمام اللاعب
-	local TargetCFrame =
-		Root.CFrame
-		* CFrame.new(0, 0, -7)
-
-	-- إذا كان للموديل PrimaryPart
-	if Model.PrimaryPart then
-		Model:PivotTo(TargetCFrame)
-	else
-		-- PivotTo يعمل حتى بدون PrimaryPart
-		Model:PivotTo(TargetCFrame)
-	end
-end
-
---==================================================
--- Continuous Bring
---==================================================
-
-local function StartBring()
-	if Connections.Bring then
-		Connections.Bring:Disconnect()
-	end
-
-	Connections.Bring = RunService.Heartbeat:Connect(function()
-
-		if not BringEnabled then
-			return
-		end
-
-		for Model, Selected in pairs(SelectedItems) do
-
-			if Selected
-				and Model
-				and Model.Parent
-				and Model:IsDescendantOf(ObjectModels) then
-
-				BringModel(Model)
-
-			end
-
-		end
-	end)
-end
-
-StartBring()
-
---==================================================
--- Toggle
---==================================================
-
-Toggle.MouseButton1Click:Connect(function()
-
-	BringEnabled = not BringEnabled
-
-	if BringEnabled then
-
-		Toggle.Text = "Bring: ON"
-		Toggle.BackgroundColor3 = Color3.fromRGB(45,140,80)
-
-	else
-
-		Toggle.Text = "Bring: OFF"
-		Toggle.BackgroundColor3 = Color3.fromRGB(45,45,52)
-
-	end
-end)
-
---==================================================
--- Select All
+-- Select / Clear
 --==================================================
 
 local SelectAll = Instance.new("TextButton")
-SelectAll.Name = "SelectAll"
-SelectAll.Size = UDim2.new(0.48, -5, 0, 30)
-SelectAll.Position = UDim2.new(0, 10, 0, 390)
-SelectAll.BackgroundColor3 = Color3.fromRGB(40,40,48)
+SelectAll.Size = UDim2.new(0.5,-10,0,27)
+SelectAll.Position = UDim2.new(0,8,0,297)
+SelectAll.BackgroundColor3 = Color3.fromRGB(38,38,45)
 SelectAll.BorderSizePixel = 0
 SelectAll.Text = "Select All"
 SelectAll.TextColor3 = Color3.fromRGB(220,220,225)
-SelectAll.TextSize = 12
+SelectAll.TextSize = 10
 SelectAll.Font = Enum.Font.GothamBold
 SelectAll.Parent = Main
 
 local SelectCorner = Instance.new("UICorner")
-SelectCorner.CornerRadius = UDim.new(0,7)
+SelectCorner.CornerRadius = UDim.new(0,6)
 SelectCorner.Parent = SelectAll
+
+local Clear = Instance.new("TextButton")
+Clear.Size = UDim2.new(0.5,-10,0,27)
+Clear.Position = UDim2.new(0.5,2,0,297)
+Clear.BackgroundColor3 = Color3.fromRGB(38,38,45)
+Clear.BorderSizePixel = 0
+Clear.Text = "Clear"
+Clear.TextColor3 = Color3.fromRGB(220,220,225)
+Clear.TextSize = 10
+Clear.Font = Enum.Font.GothamBold
+Clear.Parent = Main
+
+local ClearCorner = Instance.new("UICorner")
+ClearCorner.CornerRadius = UDim.new(0,6)
+ClearCorner.Parent = Clear
 
 SelectAll.MouseButton1Click:Connect(function()
 
@@ -383,27 +321,7 @@ SelectAll.MouseButton1Click:Connect(function()
 	UpdateCounter()
 end)
 
---==================================================
--- Clear Selection
---==================================================
-
-local ClearAll = Instance.new("TextButton")
-ClearAll.Name = "ClearAll"
-ClearAll.Size = UDim2.new(0.48, -5, 0, 30)
-ClearAll.Position = UDim2.new(0.52, 0, 0, 390)
-ClearAll.BackgroundColor3 = Color3.fromRGB(40,40,48)
-ClearAll.BorderSizePixel = 0
-ClearAll.Text = "Clear"
-ClearAll.TextColor3 = Color3.fromRGB(220,220,225)
-ClearAll.TextSize = 12
-ClearAll.Font = Enum.Font.GothamBold
-ClearAll.Parent = Main
-
-local ClearCorner = Instance.new("UICorner")
-ClearCorner.CornerRadius = UDim.new(0,7)
-ClearCorner.Parent = ClearAll
-
-ClearAll.MouseButton1Click:Connect(function()
+Clear.MouseButton1Click:Connect(function()
 
 	table.clear(SelectedItems)
 
@@ -412,24 +330,120 @@ ClearAll.MouseButton1Click:Connect(function()
 end)
 
 --==================================================
--- Drag / Grab GUI
+-- REMOVE ANCHOR
+--==================================================
+
+local function UnanchorModel(Model)
+
+	for _, Object in ipairs(Model:GetDescendants()) do
+
+		if Object:IsA("BasePart") then
+			Object.Anchored = false
+		end
+
+	end
+end
+
+--==================================================
+-- Bring
+--==================================================
+
+local function BringModel(Model)
+
+	if not Model
+		or not Model.Parent
+		or not Model:IsDescendantOf(ObjectModels) then
+		return
+	end
+
+	local Character = Player.Character
+
+	if not Character then
+		return
+	end
+
+	local Root = Character:FindFirstChild("HumanoidRootPart")
+
+	if not Root then
+		return
+	end
+
+	-- إزالة الـ Anchor قبل النقل
+	UnanchorModel(Model)
+
+	-- أمام اللاعب
+	local Target = Root.CFrame * CFrame.new(0,0,-6)
+
+	Model:PivotTo(Target)
+end
+
+--==================================================
+-- Bring Loop
+--==================================================
+
+RunService.Heartbeat:Connect(function()
+
+	if not BringEnabled then
+		return
+	end
+
+	for Model, Selected in pairs(SelectedItems) do
+
+		if Selected
+			and Model
+			and Model.Parent then
+
+			BringModel(Model)
+
+		end
+	end
+end)
+
+--==================================================
+-- Toggle Bring
+--==================================================
+
+Toggle.MouseButton1Click:Connect(function()
+
+	BringEnabled = not BringEnabled
+
+	if BringEnabled then
+
+		Toggle.Text = "Bring: ON"
+		Toggle.BackgroundColor3 = Color3.fromRGB(40,130,70)
+
+	else
+
+		Toggle.Text = "Bring: OFF"
+		Toggle.BackgroundColor3 = Color3.fromRGB(45,45,52)
+
+	end
+end)
+
+--==================================================
+-- GUI Show / Hide Toggle
+--==================================================
+
+OpenButton.MouseButton1Click:Connect(function()
+
+	GuiVisible = not GuiVisible
+
+	Main.Visible = GuiVisible
+
+	if GuiVisible then
+		OpenButton.Text = "B"
+	else
+		OpenButton.Text = "+"
+	end
+end)
+
+--==================================================
+-- Drag Main GUI
 --==================================================
 
 local Dragging = false
 local DragStart
 local StartPosition
-
-local function UpdateDrag(Input)
-
-	local Delta = Input.Position - DragStart
-
-	Main.Position = UDim2.new(
-		StartPosition.X.Scale,
-		StartPosition.X.Offset + Delta.X,
-		StartPosition.Y.Scale,
-		StartPosition.Y.Offset + Delta.Y
-	)
-end
 
 Title.InputBegan:Connect(function(Input)
 
@@ -458,7 +472,13 @@ UserInputService.InputChanged:Connect(function(Input)
 			or Input.UserInputType == Enum.UserInputType.Touch
 		) then
 
-		UpdateDrag(Input)
+		local Delta = Input.Position - DragStart
 
+		Main.Position = UDim2.new(
+			StartPosition.X.Scale,
+			StartPosition.X.Offset + Delta.X,
+			StartPosition.Y.Scale,
+			StartPosition.Y.Offset + Delta.Y
+		)
 	end
 end)
